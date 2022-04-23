@@ -9,7 +9,16 @@
                     "name": "Move",
                     "type": "Value",
                     "id": "03a1a390-5ed5-41a7-a00b-5e8ae673e11d",
-                    "expectedControlType": "Vector2",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Jump",
+                    "type": "Button",
+                    "id": "6f4c65ac-6e33-4c8f-82cf-3e0d93ef4c12",
+                    "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
@@ -17,9 +26,9 @@
             ],
             "bindings": [
                 {
-                    "name": "WASD",
-                    "id": "aa97fe1d-b512-402f-9a78-dfa42c4278e6",
-                    "path": "2DVector",
+                    "name": "1D Axis",
+                    "id": "cc21b75e-f15e-43d3-9169-28865f9a9ace",
+                    "path": "1DAxis",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -28,8 +37,8 @@
                     "isPartOfComposite": false
                 },
                 {
-                    "name": "left",
-                    "id": "f079b39f-3bad-4960-853f-33222c2a1357",
+                    "name": "negative",
+                    "id": "267914b8-94b1-460b-a42c-f7f62888fc26",
                     "path": "<Keyboard>/a",
                     "interactions": "",
                     "processors": "",
@@ -39,8 +48,8 @@
                     "isPartOfComposite": true
                 },
                 {
-                    "name": "right",
-                    "id": "b857eb03-4d42-4ea0-8f89-cd0cfd55753d",
+                    "name": "positive",
+                    "id": "58634175-95e7-4c38-9eb7-1f2e2d5e9f60",
                     "path": "<Keyboard>/d",
                     "interactions": "",
                     "processors": "",
@@ -48,6 +57,17 @@
                     "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "d6942825-d853-4e58-a165-8e461d0520e3",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard & Mouse",
+                    "action": "Jump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         }
