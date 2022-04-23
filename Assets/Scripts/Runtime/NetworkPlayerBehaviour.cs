@@ -1,4 +1,5 @@
 ﻿using System;
+using DG.Tweening;
 using Mirror;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -8,16 +9,18 @@ namespace Runtime
     [RequireComponent(typeof(Rigidbody2D), typeof(PlayerInput))]
     public class NetworkPlayerBehaviour : NetworkBehaviour, IAttackAble
     {
+        [SerializeField] private LayerMask groundLayer;
         [SerializeField] private Rigidbody2D rigid;
         [SerializeField] private PlayerInput playerInput;
-        [SerializeField] private LayerMask groundLayer;
-
+        [SerializeField] private Transform aimRig;
+        [SerializeField] private Camera mainCam;
+        
         [Header("Status")] [SyncVar] [SerializeField]
-        private uint maxHealth = 10;
+        private uint maxHealth;
 
         [SyncVar] [SerializeField] private uint curHealth;
-        [SyncVar] [SerializeField] private float startSpeed = 6;
-        [SyncVar] [SerializeField] private float maxSpeed = 3;
+        [SyncVar] [SerializeField] private float speed;
+        [SyncVar] [SerializeField] private float jumpPower;
 
 
         [SyncVar] private bool _isGround;
@@ -45,6 +48,14 @@ namespace Runtime
             rigid ??= GetComponent<Rigidbody2D>();
             playerInput ??= GetComponent<PlayerInput>();
             playerInput.enabled = false;
+
+            aimRig = transform.Find("Aim Rig").transform;
+
+            rigid.simulated = false;
+            
+            curHealth = maxHealth = 10;
+            speed = 4;
+            jumpPower = 8;
         }
 
         #endregion
@@ -76,21 +87,25 @@ namespace Runtime
             }
         }
 
-        public float StartSpeed => startSpeed;
-        public float MaxSpeed => maxSpeed;
-
+        public float Speed => speed;
+        
         #endregion
 
         #region SERVER
+        
+        private void Awake()
+        {
+            mainCam = Camera.main;
+        }
 
         public override void OnStartServer()
         {
             curHealth = maxHealth;
         }
-
-        [ServerCallback]
+        
         private void Update()
         {
+            if(!isServer) { return; }
             GroundCheck();
         }
 
@@ -112,6 +127,7 @@ namespace Runtime
         public override void OnStartLocalPlayer()
         {
             playerInput.enabled = true;
+            rigid.simulated = true;
         }
 
         [ClientCallback]
@@ -125,19 +141,14 @@ namespace Runtime
 
         private void Move()
         {
-            rigid.AddForce(Vector2.right * _inputAxis * StartSpeed);
+            rigid.velocity = new Vector2(_inputAxis * Speed, rigid.velocity.y);
 
-            rigid.velocity = new Vector2(Mathf.Clamp(rigid.velocity.x, -MaxSpeed, MaxSpeed), rigid.velocity.y);
-
-            if (_inputAxis != 0)
-            {
-                return;
-            }
+            if (_inputAxis != 0) { return; }
 
 
             Vector2 velocity = rigid.velocity;
 
-            rigid.velocity = Vector2.Lerp(velocity, new Vector2(0, velocity.y), 0.3f);
+            rigid.velocity = Vector2.Lerp(velocity, new Vector2(0, velocity.y), 0.1f);
         }
 
         private void Jump()
@@ -146,7 +157,7 @@ namespace Runtime
 
             rigid.velocity = new Vector2(rigid.velocity.x, 0);
             
-            rigid.AddForce(Vector2.up * 5, ForceMode2D.Impulse);
+            rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
            
             jumpTimer = Time.time;
         }
@@ -175,6 +186,15 @@ namespace Runtime
         {
             _inputJump = context.ReadValue<float>();
         }
+        
+        public void MouseInput(InputAction.CallbackContext context)
+        {
+            Vector3 target = mainCam.ScreenToWorldPoint(context.ReadValue<Vector2>());
+            
+            aimRig.DORotateQuaternion(LookAt2D(target,aimRig),0.1f).Restart();
+            
+            // aimRig.rotation = LookAt2D(target, aimRig);
+        }
 
         #endregion
 
@@ -190,5 +210,14 @@ namespace Runtime
         #endregion
 
         #endregion
+
+        private Quaternion LookAt2D(Vector3 target, Transform transform = null)
+        {
+            Vector3 dir = (target - (transform == null ? this.transform.position : transform.position)).normalized;
+            
+            float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+
+            return Quaternion.AngleAxis(angle, Vector3.forward);
+        }
     }
 }
